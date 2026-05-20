@@ -1,0 +1,90 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "projectk-backend"
+version = "1.0.0"
+description = "ProjectK - AI Call Screening Backend (Chat Only)"
+requires-python = ">=3.11"
+readme = "README.md"
+license = {text = "MIT"}
+
+dependencies = [
+    # Web Framework
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.0.0",
+    
+    # Azure Services
+    "azure-openai>=1.6.0",
+    "azure-identity>=1.14.0",
+    
+    # Configuration & Templates
+    "python-dotenv>=1.0.0",
+    "pyyaml>=6.0",
+    "jinja2>=3.0.0",
+    
+    # Async & HTTP
+    "aiohttp>=3.9.0",
+    "httpx>=0.25.0",
+    
+    # Optional: Session Management
+    "redis>=5.0.0",
+    
+    # Logging & Observability
+    "python-json-logger>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0",
+]
+
+voice = [
+    "azure-cognitiveservices-speech>=1.43.0",
+    "azure-communication-calling>=1.0.0",
+]
+
+[project.urls]
+Repository = "https://github.com/yourusername/projectk"
+Documentation = "https://github.com/yourusername/projectk/wiki"
+
+[tool.setuptools]
+packages = ["apps", "utils"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]  # Line length handled by black
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false

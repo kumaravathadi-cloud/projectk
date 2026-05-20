@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ART Voice Agent Accelerator - ARTAgent Architecture Guide</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        nav {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        nav a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: #764ba2;
+        }
+
+        main {
+            padding: 40px;
+        }
+
+        section {
+            margin-bottom: 50px;
+            scroll-margin-top: 100px;
+        }
+
+        h2 {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        h3 {
+            color: #764ba2;
+            font-size: 1.3em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        h4 {
+            color: #555;
+            font-size: 1.1em;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            line-height: 1.7;
+        }
+
+        .code-block {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .architecture-diagram {
+            background: white;
+            border: 2px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.1);
+        }
+
+        .card h4 {
+            color: #667eea;
+            margin-top: 0;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .badge.tech {
+            background: #764ba2;
+        }
+
+        .badge.file {
+            background: #49c996;
+        }
+
+        .badge.api {
+            background: #ff6b6b;
+        }
+
+        a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .github-link {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 5px 5px 5px 0;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+
+        .github-link:hover {
+            background: #764ba2;
+            text-decoration: none;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .callout {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .callout strong {
+            color: #1976D2;
+        }
+
+        .file-tree {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-family: 'Monaco', monospace;
+            font-size: 0.85em;
+            line-height: 1.5;
+            overflow-x: auto;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e9ecef;
+            margin: 20px 0;
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 12px 20px;
+            cursor: pointer;
+            color: #666;
+            font-size: 1em;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+            color: #666;
+        }
+
+        .agent-flow {
+            background: #f0f7ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 2px solid #667eea;
+        }
+
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .tech-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .tech-item h5 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .breadcrumb {
+            color: #999;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+
+        .breadcrumb a {
+            color: #667eea;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .feature-list li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .comparison-table {
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        .comparison-table td {
+            padding: 12px;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            nav ul {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            main {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎙️ Azure Real-Time (ART) Voice Agent Accelerator</h1>
+            <p>ARTAgent: Comprehensive Agent Architecture & Integration Guide</p>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#architecture">Architecture</a></li>
+                <li><a href="#agents">Agents</a></li>
+                <li><a href="#technologies">Technologies</a></li>
+                <li><a href="#file-structure">File Structure</a></li>
+                <li><a href="#connections">Connections</a></li>
+                <li><a href="#api">APIs</a></li>
+                <li><a href="#quick-start">Quick Start</a></li>
+            </ul>
+        </nav>
+
+        <main>
+            <!-- Overview Section -->
+            <section id="overview">
+                <h2>📌 Overview</h2>
+                <p>
+                    The <span class="highlight">ARTAgent</span> framework is a modular, enterprise-grade voice agent orchestration 
+                    system built on Azure services. It enables building sophisticated multi-agent voice systems with intelligent 
+                    handoffs, tool integration, and real-time voice processing.
+                </p>
+                
+                <div class="callout">
+                    <strong>🚀 Key Innovation:</strong> The framework uses a three-layer modular architecture:
+                    <strong>Agents</strong> (YAML config + prompts), <strong>Tools</strong> (pluggable business logic), 
+                    and <strong>Scenarios</strong> (multi-agent orchestration flows).
+                </div>
+
+                <h3>What ARTAgent Does</h3>
+                <ul class="feature-list">
+                    <li>Manages multi-agent conversations with intelligent handoff routing</li>
+                    <li>Integrates voice (ACS/VoiceLive) with AI orchestration (Azure OpenAI)</li>
+                    <li>Provides scenario-based orchestration for banking, insurance, and more</li>
+                    <li>Supports MCP (Model Context Protocol) for external tool integration</li>
+                    <li>Delivers real-time voice with <2 agent handoff latency</li>
+                    <li>Logs and manages call state via Redis + Cosmos DB</li>
+                </ul>
+            </section>
+
+            <!-- Architecture Section -->
+            <section id="architecture">
+                <h2>🏗️ Core Architecture</h2>
+
+                <h3>Three-Layer Modular Design</h3>
+                <p>ARTAgent separates concerns into three independent, composable layers:</p>
+
+                <div class="architecture-diagram">
+                    <div class="mermaid">
+graph TD
+    A["🔊 Caller/Browser<br/>Phone or Web Interface"] -->|WebSocket/Media Stream| B["FastAPI Backend<br/>+ Voice Orchestrator"]
+    
+    B -->|SpeechCascade<br/>STT→LLM→TTS| C1["⚙️ Orchestrator 1<br/>SpeechCascade"]
+    B -->|VoiceLive<br/>Voice-to-Voice| C2["⚡ Orchestrator 2<br/>VoiceLive SDK"]
+    
+    C1 --> D["LAYER 1: AGENTS<br/>Configuration & Prompts"]
+    C2 --> D
+    
+    D -->|Concierge| D1["🎯 Entry Point Agent<br/>banking/insurance"]
+    D -->|Fraud Agent| D2["🔍 Fraud Detection<br/>Suspicious Activity"]
+    D -->|Investment| D3["📈 Investment Advisor<br/>Portfolio Guidance"]
+    D -->|Claims| D4["📋 Claims Specialist<br/>Insurance Claims"]
+    
+    D --> E["LAYER 2: TOOLS<br/>Business Logic & Functions"]
+    
+    E -->|Auth| E1["🔐 verify_identity<br/>send_mfa_code"]
+    E -->|Fraud| E2["🛡️ analyze_transactions<br/>block_card"]
+    E -->|Handoff| E3["↔️ handoff_fraud_agent<br/>handoff_investment"]
+    E -->|Banking| E4["🏦 get_account_summary<br/>get_transactions"]
+    E -->|Insurance| E5["📄 record_fnol<br/>get_policy_details"]
+    
+    E --> F["LAYER 3: SCENARIOS<br/>Multi-Agent Orchestration"]
+    
+    F -->|banking| F1["🏦 Banking Scenario<br/>Concierge→Fraud→Investment"]
+    F -->|insurance| F2["🏥 Insurance Scenario<br/>Concierge→Claims→Policy"]
+    
+    F --> G["Azure OpenAI<br/>gpt-4o-realtime"]
+    
+    G --> H1["Azure Speech<br/>STT/TTS"]
+    G --> H2["Cosmos DB<br/>Profiles & History"]
+    G --> H3["Redis Cache<br/>Session State"]
+    
+    style A fill:#667eea,stroke:#333,stroke-width:2px,color:#fff
+    style B fill:#667eea,stroke:#333,stroke-width:2px,color:#fff
+    style C1 fill:#764ba2,stroke:#333,stroke-width:2px,color:#fff
+    style C2 fill:#764ba2,stroke:#333,stroke-width:2px,color:#fff
+    style D fill:#49c996,stroke:#333,stroke-width:2px,color:#fff
+    style E fill:#ff6b6b,stroke:#333,stroke-width:2px,color:#fff
+    style F fill:#ffa94d,stroke:#333,stroke-width:2px,color:#fff
+    style G fill:#667eea,stroke:#333,stroke-width:2px,color:#fff
+    style H1 fill:#49c996,stroke:#333,stroke-width:2px,color:#fff
+    style H2 fill:#49c996,stroke:#333,stroke-width:2px,color:#fff
+    style H3 fill:#49c996,stroke:#333,stroke-width:2px,color:#fff
+                    </div>
+                </div>
+
+                <h3>Operational Modes</h3>
+                <table>
+                    <tr>
+                        <th>Mode</th>
+                        <th>Technology</th>
+                        <th>Latency</th>
+                        <th>Setup Complexity</th>
+                    </tr>
+                    <tr>
+                        <td><strong>SpeechCascade</strong></td>
+                        <td>Azure Speech STT → LLM → TTS</td>
+                        <td>~400ms</td>
+                        <td>Full control, moderate latency</td>
+                    </tr>
+                    <tr>
+                        <td><strong>VoiceLive</strong></td>
+                        <td>Azure VoiceLive SDK (gpt-4o-realtime)</td>
+                        <td>~200ms</td>
+                        <td>Fastest, lowest latency</td>
+                    </tr>
+                </table>
+
+                <div class="callout">
+                    <strong>💡 Pro Tip:</strong> Both modes use the same agent configuration and tool registry. 
+                    Switch modes via the <code>ACS_STREAMING_MODE</code> environment variable.
+                </div>
+            </section>
+
+            <!-- Agents Section -->
+            <section id="agents">
+                <h2>🤖 Agent System</h2>
+
+                <h3>What is an Agent?</h3>
+                <p>
+                    An agent is a configured conversational entity with:
+                </p>
+                <ul class="feature-list">
+                    <li><strong>Identity:</strong> Name, description, greeting, role</li>
+                    <li><strong>Prompt:</strong> System message (Jinja2 template with variables)</li>
+                    <li><strong>Tools:</strong> List of tool names it can invoke</li>
+                    <li><strong>Voice Config:</strong> TTS/STT parameters</li>
+                    <li><strong>Model Config:</strong> LLM selection (default, cascade, voicelive)</li>
+                    <li><strong>Handoff Config:</strong> Routing rules to other agents</li>
+                </ul>
+
+                <h3>Built-in Agents</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Concierge</h4>
+                        <p>Entry-point agent. Routes caller to appropriate specialist based on intent.</p>
+                        <div>
+                            <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries/agentstore/concierge" class="github-link">View Files</a>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h4>Fraud Agent</h4>
+                        <p>Detects suspicious activity, blocks cards, verifies transactions.</p>
+                        <div>
+                            <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries/agentstore/fraud_agent" class="github-link">View Files</a>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h4>Auth Agent</h4>
+                        <p>Handles client authentication, MFA, identity verification.</p>
+                        <div>
+                            <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries/agentstore/auth_agent" class="github-link">View Files</a>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h4>Investment Advisor</h4>
+                        <p>Provides investment guidance and portfolio recommendations.</p>
+                        <div>
+                            <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries/agentstore/investment_advisor" class="github-link">View Files</a>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h4>Policy Advisor</h4>
+                        <p>Insurance policy information and quote generation.</p>
+                        <div>
+                            <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries/agentstore/policy_advisor" class="github-link">View Files</a>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h4>Claims Specialist</h4>
+                        <p>Insurance claim processing (FNOL - First Notice of Loss).</p>
+                        <div>
+                            <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries/agentstore/claims_specialist" class="github-link">View Files</a>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Agent Configuration</h3>
+                <p>Each agent consists of three files in its folder:</p>
+
+                <h4>1. <code>agent.yaml</code> - Agent Configuration</h4>
+                <div class="code-block">
+name: investment_advisor
+description: "Investment advisor for portfolio guidance"
+greeting: "Hello! I'm your investment advisor. How can I help with your portfolio today?"
+return_greeting: "Thank you for speaking with me. Your advisor will take it from here."
+
+handoff:
+  trigger: handoff_investment_advisor
+  is_entry_point: false
+
+model:
+  name: gpt-4o
+  temperature: 0.7
+
+voice:
+  voice_name: en-US-AvaNeural
+  rate: 1.0
+
+tool_names:
+  - get_account_summary
+  - get_investment_recommendations
+  - handoff_concierge
+
+template_vars:
+  context: "Investment advisory"
+                </div>
+
+                <h4>2. <code>prompt.jinja</code> - System Prompt Template</h4>
+                <div class="code-block">
+You are a professional investment advisor for {{ institution_name }}.
+Your role: {{ context }}
+
+Guidelines:
+- Provide personalized investment recommendations
+- Consider risk tolerance and investment timeline
+- Reference portfolio holdings
+- Suggest diversification opportunities
+
+Use only approved investment products.
+Do NOT provide tax or legal advice.
+
+Available tools: {{ available_tools }}
+                </div>
+
+                <h4>3. Optional: <code>tools.py</code> - Agent-Scoped Tools</h4>
+                <div class="code-block">
+# Agent-specific tool implementations
+async def get_investment_recommendations(args: dict) -> dict:
+    account_id = args.get("account_id")
+    # Custom investment recommendation logic
+    return {"recommendations": [...]}
+                </div>
+
+                <h3>Agent Discovery</h3>
+                <p>At startup, the framework automatically discovers agents:</p>
+                <div class="code-block">
+from apps.artagent.backend.registries.agentstore.loader import discover_agents
+
+# Scans agentstore/ directory for agent.yaml files
+agents = discover_agents()
+# Returns: Dict[str, UnifiedAgent]
+# Example: {
+#   "concierge": UnifiedAgent(...),
+#   "fraud_agent": UnifiedAgent(...),
+#   "investment_advisor": UnifiedAgent(...),
+#   ...
+# }
+                </div>
+
+                <p>
+                    <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/registries/agentstore/loader.py" class="github-link">
+                        View Agent Loader Code
+                    </a>
+                </p>
+            </section>
+
+            <!-- Technologies Section -->
+            <section id="technologies">
+                <h2>🛠️ Technology Stack</h2>
+
+                <h3>Framework & Language</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">
+                        <h5>Python 3.11+</h5>
+                        <p>Core language with async/await support</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>FastAPI 0.100+</h5>
+                        <p>Web framework with WebSocket support for real-time voice</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>Pydantic 2.x</h5>
+                        <p>Data validation and serialization</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>Dataclasses</h5>
+                        <p>Configuration object definitions</p>
+                    </div>
+                </div>
+
+                <h3>Configuration & Templating</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">
+                        <h5>YAML</h5>
+                        <p>Agent and scenario definitions</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>Jinja2</h5>
+                        <p>Dynamic prompt templating with variables</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>Environment Variables</h5>
+                        <p>Runtime configuration via .env files</p>
+                    </div>
+                </div>
+
+                <h3>Azure Services</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">
+                        <h5>Azure OpenAI</h5>
+                        <p>LLM inference (gpt-4o, gpt-4o-realtime)</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>Azure Speech</h5>
+                        <p>STT (Speech-to-Text) & TTS (Text-to-Speech)</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>Azure VoiceLive SDK</h5>
+                        <p>Low-latency voice-to-voice with tools</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>Azure Communication Services (ACS)</h5>
+                        <p>Phone integration, SIP media streaming</p>
+                    </div>
+                </div>
+
+                <div class="tech-stack">
+                    <div class="tech-item">
+                        <h5>Azure Cosmos DB</h5>
+                        <p>Document database (MongoDB API) for profiles, transactions, call logs</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>Azure Redis</h5>
+                        <p>Session state, caching, call session management</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>Azure Container Apps</h5>
+                        <p>Containerized backend deployment</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>Application Insights</h5>
+                        <p>Monitoring, logging, telemetry, performance analytics</p>
+                    </div>
+                </div>
+
+                <h3>Agent Integration</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">
+                        <h5>Model Context Protocol (MCP)</h5>
+                        <p>External tool server integration framework</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>OpenAI Function Calling</h5>
+                        <p>Structured tool schema for LLM tool invocation</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>WebSocket</h5>
+                        <p>Real-time bidirectional communication for voice streaming</p>
+                    </div>
+                </div>
+
+                <h3>Frontend</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">
+                        <h5>React 18+</h5>
+                        <p>UI framework</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>Vite</h5>
+                        <p>Modern bundler and dev server</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>TypeScript</h5>
+                        <p>Type-safe JavaScript</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>WebRTC</h5>
+                        <p>Browser-based voice communication</p>
+                    </div>
+                </div>
+
+                <h3>Infrastructure</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">
+                        <h5>Docker</h5>
+                        <p>Container runtime</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>Terraform / Bicep</h5>
+                        <p>Infrastructure as Code for Azure resources</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>Azure CLI / azd</h5>
+                        <p>Deployment automation</p>
+                    </div>
+                </div>
+
+                <h3>Testing & Quality</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">
+                        <h5>pytest</h5>
+                        <p>Python testing framework</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>Playwright</h5>
+                        <p>Browser automation testing</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>Pre-commit</h5>
+                        <p>Code quality checks</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- File Structure Section -->
+            <section id="file-structure">
+                <h2>📁 File Structure & Codebase</h2>
+
+                <h3>Repository Root</h3>
+                <div class="file-tree">
+art-voice-agent-accelerator/
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent">apps/artagent/</a>
+│   ├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend">backend/</a>
+│   │   ├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries">registries/</a>
+│   │   ├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/api">api/</a>
+│   │   ├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/voice">voice/</a>
+│   │   ├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/config">config/</a>
+│   │   ├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/main.py">main.py</a>
+│   └── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/frontend">frontend/</a>
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/src">src/</a>
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/infra">infra/</a>
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/docs">docs/</a>
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/samples">samples/</a>
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/tests">tests/</a>
+└── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/utils">utils/</a>
+                </div>
+
+                <h3>Agent Store - Layer 1 (Agents)</h3>
+                <div class="file-tree">
+registries/agentstore/
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/registries/agentstore/__init__.py">__init__.py</a>
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/registries/agentstore/base.py">base.py</a> ⭐ UnifiedAgent, HandoffConfig
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/registries/agentstore/loader.py">loader.py</a> ⭐ discover_agents(), build_handoff_map()
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/registries/agentstore/session_manager.py">session_manager.py</a>
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/registries/agentstore/_defaults.yaml">_defaults.yaml</a> ⭐ Shared defaults
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries/agentstore/concierge">concierge/</a>
+│   ├── agent.yaml
+│   └── prompt.jinja
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries/agentstore/fraud_agent">fraud_agent/</a>
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries/agentstore/auth_agent">auth_agent/</a>
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries/agentstore/investment_advisor">investment_advisor/</a>
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries/agentstore/policy_advisor">policy_advisor/</a>
+└── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries/agentstore/claims_specialist">claims_specialist/</a>
+                </div>
+
+                <h3>Tool Store - Layer 2 (Tools)</h3>
+                <div class="file-tree">
+registries/toolstore/
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/registries/toolstore/__init__.py">__init__.py</a>
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/registries/toolstore/registry.py">registry.py</a> ⭐ ToolRegistry, register_tool()
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/registries/toolstore/auth.py">auth.py</a> - verify_client_identity, send_mfa_code
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/registries/toolstore/fraud.py">fraud.py</a> - detect_fraud, block_card
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/registries/toolstore/handoffs.py">handoffs.py</a> - Agent-to-agent routing tools
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/registries/toolstore/escalation.py">escalation.py</a> - Human escalation
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/registries/toolstore/knowledge_base.py">knowledge_base.py</a> - RAG search
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/registries/toolstore/compliance.py">compliance.py</a> - KYC/AML checks
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries/toolstore/banking">banking/</a>
+│   ├── banking.py - get_account_summary, get_transactions
+│   └── investments.py
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries/toolstore/insurance">insurance/</a>
+│   ├── fnol.py - record_fnol (claim intake)
+│   ├── policy.py
+│   └── subro.py
+└── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries/toolstore/mcp">mcp/</a>
+    ├── client.py - MCP client integration
+    └── adapter.py
+                </div>
+
+                <h3>Scenario Store - Layer 3 (Orchestration)</h3>
+                <div class="file-tree">
+registries/scenariostore/
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/registries/scenariostore/__init__.py">__init__.py</a>
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/registries/scenariostore/loader.py">loader.py</a> ⭐ load_scenario(), ScenarioConfig
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries/scenariostore/banking">banking/</a>
+│   └── scenario.yaml ⭐ Handoff routing rules
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries/scenariostore/insurance">insurance/</a>
+│   └── scenario.yaml
+└── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/registries/scenariostore/default">default/</a>
+    └── scenario.yaml (all agents, no restrictions)
+                </div>
+
+                <h3>Voice Orchestrators</h3>
+                <div class="file-tree">
+voice/
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/voice/speech_cascade">speech_cascade/</a>
+│   └── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/voice/speech_cascade/orchestrator.py">orchestrator.py</a> - CascadeOrchestratorAdapter
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/voice/voicelive">voicelive/</a>
+│   └── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/voice/voicelive/handler.py">handler.py</a> - VoiceLiveSDKHandler
+└── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/voice/shared">shared/</a>
+    ├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/voice/shared/config_resolver.py">config_resolver.py</a>
+    └── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/voice/shared/handoff_service.py">handoff_service.py</a>
+                </div>
+
+                <h3>API Endpoints</h3>
+                <div class="file-tree">
+api/v1/
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/api/v1/__init__.py">__init__.py</a>
+├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/api/v1/router.py">router.py</a> - Main router
+└── endpoints/
+    ├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/api/v1/endpoints/health.py">health.py</a> - GET /agents, /health
+    ├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/api/v1/endpoints/agent_builder.py">agent_builder.py</a> - Dynamic agent creation
+    ├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/api/v1/endpoints/scenarios.py">scenarios.py</a> - GET /scenarios
+    ├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/api/v1/endpoints/media.py">media.py</a> - WebSocket /media/stream (ACS)
+    ├── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/api/v1/endpoints/browser.py">browser.py</a> - WebSocket /realtime (web voice)
+    └── <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/api/v1/endpoints/calls.py">calls.py</a> - Call management
+                </div>
+            </section>
+
+            <!-- Connections Section -->
+            <section id="connections">
+                <h2>🔗 How Agents Are Connected</h2>
+
+                <h3>Connection Mechanism: Tool-Based Handoffs</h3>
+                <p>
+                    Agents communicate via <span class="highlight">handoff tools</span>. When an agent needs to transfer 
+                    to another agent, it calls a handoff tool, which triggers a route to the target agent.
+                </p>
+
+                <div class="agent-flow">
+                    <h4>Handoff Flow Example</h4>
+                    <div class="mermaid">
+sequenceDiagram
+    participant Caller
+    participant Concierge
+    participant ToolRegistry as Tool Registry
+    participant Orchestrator
+    participant FraudAgent as Fraud Agent
+
+    Caller->>Concierge: "I think my card is compromised"
+    activate Concierge
+    Concierge->>Concierge: Recognize fraud concern
+    Concierge->>ToolRegistry: Call handoff_fraud_agent()
+    deactivate Concierge
+    
+    activate ToolRegistry
+    ToolRegistry->>ToolRegistry: Lookup handoff_fraud_agent
+    ToolRegistry->>ToolRegistry: Return HandoffConfig<br/>{target: fraud_agent}
+    deactivate ToolRegistry
+    
+    activate Orchestrator
+    Orchestrator->>Orchestrator: Switch to FraudAgent
+    Orchestrator->>FraudAgent: Load agent config
+    FraudAgent->>FraudAgent: Render greeting
+    deactivate Orchestrator
+    
+    activate FraudAgent
+    FraudAgent->>Caller: "Hello, I'm your fraud specialist.<br/>Let me help you secure your account."
+    Caller->>FraudAgent: "Hurry, I made some purchases"
+    FraudAgent->>FraudAgent: analyze_recent_transactions()
+    FraudAgent->>FraudAgent: block_card()
+    FraudAgent->>FraudAgent: arrange_replacement_card()
+    FraudAgent->>Caller: "Card blocked, replacement on the way"
+    deactivate FraudAgent
+                    </div>
+                </div>
+
+                <h3>Architecture: Agent → Tools → Registry → Handoff</h3>
+                <div class="architecture-diagram">
+                    <div class="mermaid">
+graph TD
+    A["Agent Configuration<br/>YAML + Jinja2<br/><br/>agent.yaml:<br/>tool_names:<br/>- handoff_fraud_agent<br/>- get_account_summary<br/>- block_card"] 
+    -->|References| B["Tool Registry<br/>registry.py<br/><br/>Tool: handoff_fraud_agent<br/>- schema: object<br/>- executor: function<br/>- is_handoff: True<br/>- target_agent: fraud_agent"]
+    
+    B -->|Triggers| C["Handoff Service<br/>handoff_service.py<br/><br/>1. Get config<br/>2. Load agent<br/>3. Render greeting<br/>4. Switch context<br/>5. Send greeting<br/>6. Continue chat"]
+    
+    C -->|Routes to| D["Target Agent<br/>fraud_agent<br/><br/>Loaded from<br/>agentstore/<br/>fraud_agent/"]
+    
+    style A fill:#49c996,stroke:#333,stroke-width:2px,color:#000
+    style B fill:#ff6b6b,stroke:#333,stroke-width:2px,color:#fff
+    style C fill:#667eea,stroke:#333,stroke-width:2px,color:#fff
+    style D fill:#764ba2,stroke:#333,stroke-width:2px,color:#fff
+                    </div>
+                </div>
+
+                <h3>Handoff Configuration (HandoffConfig)</h3>
+                <div class="code-block">
+@dataclass
+class HandoffConfig:
+    """Routes control from one agent to another"""
+    
+    trigger: str              # Tool name (e.g., "handoff_fraud_agent")
+    is_entry_point: bool      # True for Concierge (starting agent)
+    
+# In agent.yaml:
+handoff:
+  trigger: handoff_investment_advisor
+  is_entry_point: false
+                </div>
+
+                <h3>Scenario-Level Orchestration</h3>
+                <p>
+                    Scenarios define which agents are available and their handoff relationships. This enables 
+                    context-specific agent configurations (e.g., banking vs. insurance).
+                </p>
+
+                <div class="code-block">
+# scenarios/banking/scenario.yaml
+
+name: banking
+description: "Private banking customer service"
+
+agents:
+  - BankingConcierge    # Entry point
+  - FraudAgent
+  - InvestmentAdvisor
+  - AuthAgent
+
+handoffs:
+  - from: BankingConcierge
+    to: FraudAgent
+    tool: handoff_fraud_agent
+    type: announced       # Agent announces transfer
+    
+  - from: BankingConcierge
+    to: InvestmentAdvisor
+    tool: handoff_investment_advisor
+    type: announced
+
+generic_handoff:
+  enabled: true         # Allow dynamic handoffs
+  allowed_targets: [AuthAgent, FraudAgent]
+                </div>
+
+                <h3>Real-Time Tool Invocation</h3>
+                <p>
+                    Azure OpenAI processes agent responses and invokes tools using function calling. The tool 
+                    registry executes the tool and returns results.
+                </p>
+
+                <div class="code-block">
+# When agent says: "Let me transfer you to fraud detection"
+
+AZURE OPENAI (function calling)
+    ↓ Detects: tool = "handoff_fraud_agent", args = {...}
+    ↓
+ORCHESTRATOR
+    ↓ Calls: await tool_registry.execute_tool("handoff_fraud_agent", args)
+    ↓
+TOOL REGISTRY
+    ↓ Looks up tool in registry
+    ↓ Executes tool function
+    ↓ Returns result with target agent info
+    ↓
+HANDOFF SERVICE
+    ↓ Loads new agent from agentstore
+    ↓ Switches orchestrator context
+    ↓ Renders new greeting
+    ↓
+CALLER (receives): "Hello, fraud specialist here..."
+                </div>
+
+                <h3>Tool Registration & Discovery</h3>
+                <p>
+                    Tools are registered at startup from multiple sources:
+                </p>
+
+                <div class="code-block">
+# In toolstore/registry.py
+
+def register_tool(
+    name: str,
+    schema: dict,              # OpenAI function schema
+    executor: Callable,        # Async function to execute
+    is_handoff: bool = False,  # True for agent-to-agent routing
+    tags: set = None,          # e.g., {"banking", "fraud"}
+    target_agent: str = None   # If handoff tool
+):
+    """Register a tool globally"""
+    _TOOL_REGISTRY[name] = ToolDefinition(...)
+
+# At startup (main.py):
+from apps.artagent.backend.registries.toolstore import initialize_tools
+
+initialize_tools()  # Imports all tool modules, registers all tools
+                </div>
+
+                <h3>MCP (Model Context Protocol) Tool Integration</h3>
+                <p>
+                    Agents can also use tools from external MCP servers (e.g., Slack, GitHub, databases).
+                </p>
+
+                <div class="code-block">
+# In agent.yaml:
+
+mcp_servers:
+  - slack_api        # External MCP server
+  - github_access
+  - knowledge_base   # Vector search MCP
+
+# MCP tools are automatically converted to OpenAI schemas
+# and exposed to the agent alongside local tools
+                </div>
+
+                <p>
+                    <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/registries/toolstore/mcp/adapter.py" class="github-link">
+                        View MCP Adapter Code
+                    </a>
+                </p>
+            </section>
+
+            <!-- API Section -->
+            <section id="api">
+                <h2>🔌 REST & WebSocket APIs</h2>
+
+                <h3>Management APIs</h3>
+                <table>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Purpose</th>
+                    </tr>
+                    <tr>
+                        <td><code>/api/v1/health</code></td>
+                        <td>GET</td>
+                        <td>Health check, startup status</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/v1/agents</code></td>
+                        <td>GET</td>
+                        <td>List all available agents with details</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/v1/agents/{name}</code></td>
+                        <td>GET</td>
+                        <td>Get specific agent config and tools</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/v1/scenarios</code></td>
+                        <td>GET</td>
+                        <td>List available scenarios</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/v1/agent-builder/create</code></td>
+                        <td>POST</td>
+                        <td>Create dynamic agent (Agent Builder UI)</td>
+                    </tr>
+                </table>
+
+                <h3>Voice Streaming APIs (WebSocket)</h3>
+                <table>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Protocol</th>
+                        <th>Purpose</th>
+                    </tr>
+                    <tr>
+                        <td><code>/api/v1/media/stream</code></td>
+                        <td>WebSocket</td>
+                        <td>ACS phone call media streaming (SpeechCascade or VoiceLive)</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/v1/realtime/conversation</code></td>
+                        <td>WebSocket</td>
+                        <td>Browser-based voice (web UI microphone)</td>
+                    </tr>
+                </table>
+
+                <h3>Example: Listing Agents</h3>
+                <div class="code-block">
+curl https://api.example.com/api/v1/agents
+
+Response:
+{
+  "agents": [
+    {
+      "name": "concierge",
+      "description": "Entry point agent",
+      "greeting": "Hello, how can I help?",
+      "tools": ["get_account_summary", "handoff_fraud_agent", ...],
+      "model": "gpt-4o"
+    },
+    {
+      "name": "fraud_agent",
+      "description": "Fraud detection specialist",
+      "tools": ["analyze_transactions", "block_card", ...],
+      "model": "gpt-4o"
+    }
+  ]
+}
+                </div>
+
+                <p>
+                    <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/tree/main/apps/artagent/backend/api/v1/endpoints" class="github-link">
+                        View All API Endpoints
+                    </a>
+                </p>
+            </section>
+
+            <!-- Quick Start Section -->
+            <section id="quick-start">
+                <h2>🚀 Quick Start Guide</h2>
+
+                <h3>1. Clone & Setup</h3>
+                <div class="code-block">
+git clone https://github.com/Azure-Samples/art-voice-agent-accelerator.git
+cd art-voice-agent-accelerator
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Setup environment
+cp .env.sample .env
+# Edit .env with your Azure credentials
+                </div>
+
+                <h3>2. Select Orchestration Mode</h3>
+                <div class="code-block">
+# .env or export
+
+# Option 1: SpeechCascade (STT → LLM → TTS)
+export ACS_STREAMING_MODE=MEDIA
+
+# Option 2: VoiceLive (voice-to-voice, faster)
+export ACS_STREAMING_MODE=VOICE_LIVE
+                </div>
+
+                <h3>3. Run Backend</h3>
+                <div class="code-block">
+cd apps/artagent/backend
+python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
+                </div>
+
+                <h3>4. Create Custom Agent</h3>
+                <p>Create folder: <code>registries/agentstore/my_agent/</code></p>
+                <div class="code-block">
+# my_agent/agent.yaml
+name: my_agent
+description: "Custom specialized agent"
+greeting: "Hi, I'm here to help with X"
+
+handoff:
+  trigger: handoff_my_agent
+  is_entry_point: false
+
+model:
+  name: gpt-4o
+  temperature: 0.7
+
+tool_names:
+  - get_info
+  - process_request
+  - handoff_concierge
+                </div>
+
+                <div class="code-block">
+# my_agent/prompt.jinja
+You are {{ name }}, a specialized assistant.
+Your role: {{ context }}
+
+Available tools: {{ available_tools }}
+                </div>
+
+                <p>Agent auto-discovered at startup! 🎉</p>
+
+                <h3>5. Deploy to Azure</h3>
+                <div class="code-block">
+azd auth login
+azd up  # ~25 minutes (infra + container deployment)
+                </div>
+
+                <div class="callout">
+                    <strong>📚 Full Docs:</strong> See <a href="https://aiappsgbbfactory.github.io/art-voice-agent-accelerator/">official documentation</a>
+                </div>
+            </section>
+
+            <!-- Key Resources Section -->
+            <section>
+                <h2>📚 Key Resources & Links</h2>
+
+                <div class="grid">
+                    <div class="card">
+                        <h4>📖 Main Repository</h4>
+                        <p><a href="https://github.com/Azure-Samples/art-voice-agent-accelerator" target="_blank">Azure-Samples/art-voice-agent-accelerator</a></p>
+                    </div>
+
+                    <div class="card">
+                        <h4>🏗️ Architecture Overview</h4>
+                        <p><a href="https://aiappsgbbfactory.github.io/art-voice-agent-accelerator/architecture/" target="_blank">Full Architecture Documentation</a></p>
+                    </div>
+
+                    <div class="card">
+                        <h4>⚡ Quick Start</h4>
+                        <p><a href="https://aiappsgbbfactory.github.io/art-voice-agent-accelerator/getting-started/quickstart/" target="_blank">25-Minute Deployment Guide</a></p>
+                    </div>
+
+                    <div class="card">
+                        <h4>💻 Local Development</h4>
+                        <p><a href="https://aiappsgbbfactory.github.io/art-voice-agent-accelerator/getting-started/local-development/" target="_blank">Setup Local Environment</a></p>
+                    </div>
+
+                    <div class="card">
+                        <h4>🤖 Agent Configuration</h4>
+                        <p><a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/apps/artagent/backend/registries/README.md" target="_blank">Registries Documentation</a></p>
+                    </div>
+
+                    <div class="card">
+                        <h4>🎨 ARTist Certification</h4>
+                        <p><a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/docs/community/artist-certification.md" target="_blank">Certification Program</a></p>
+                    </div>
+                </div>
+
+                <h3>Community & Support</h3>
+                <ul class="feature-list">
+                    <li><a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/discussions">GitHub Discussions</a> - Ask questions, share ideas</li>
+                    <li><a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/issues">GitHub Issues</a> - Report bugs, request features</li>
+                    <li><a href="https://github.com/Azure-Samples/art-voice-agent-accelerator/blob/main/CONTRIBUTING.md">Contributing Guidelines</a> - Contribute to the project</li>
+                </ul>
+            </section>
+
+            <!-- Technology Comparison -->
+            <section>
+                <h2>🔄 SpeechCascade vs VoiceLive Comparison</h2>
+
+                <table class="comparison-table">
+                    <tr>
+                        <th></th>
+                        <th>SpeechCascade</th>
+                        <th>VoiceLive</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Architecture</strong></td>
+                        <td>STT → LLM → TTS (modular)</td>
+                        <td>End-to-end voice (integrated)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Latency</strong></td>
+                        <td>~400ms round-trip</td>
+                        <td>~200ms round-trip</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Setup Complexity</strong></td>
+                        <td>Medium (3 services)</td>
+                        <td>Low (single SDK)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tool Invocation</strong></td>
+                        <td>Function calling via OpenAI API</td>
+                        <td>VoiceLive native tools</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Customization</strong></td>
+                        <td>High (VAD, phrase lists, etc.)</td>
+                        <td>Medium (SDK-provided)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>STT Accuracy</strong></td>
+                        <td>Azure Speech Services</td>
+                        <td>VoiceLive optimized</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Barge-in Support</strong></td>
+                        <td>Custom implementation</td>
+                        <td>Built-in</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Best For</strong></td>
+                        <td>Complex workflows, fine control</td>
+                        <td>Speed-to-market, low latency</td>
+                    </tr>
+                </table>
+            </section>
+
+            <!-- Summary -->
+            <section>
+                <h2>✅ Summary</h2>
+
+                <div class="callout">
+                    <h4>ARTAgent is designed for rapid, enterprise-grade voice agent development:</h4>
+                    <ul>
+                        <li>🏗️ <strong>Three-layer architecture:</strong> Agents (config), Tools (business logic), Scenarios (orchestration)</li>
+                        <li>🔗 <strong>Tool-based handoffs:</strong> Agents route via function calls to handoff tools</li>
+                        <li>⚡ <strong>Dual orchestrators:</strong> SpeechCascade (customizable) or VoiceLive (fast)</li>
+                        <li>🔌 <strong>MCP integration:</strong> Plug in external tools via Model Context Protocol</li>
+                        <li>📱 <strong>Multi-channel:</strong> Phone (ACS), web (WebRTC), browser demo</li>
+                        <li>☁️ <strong>Azure native:</strong> OpenAI, Speech Services, Cosmos DB, Redis, Container Apps</li>
+                        <li>📚 <strong>Production-ready:</strong> Monitoring, auth, compliance, scalability built-in</li>
+                    </ul>
+                </div>
+
+                <p style="margin-top: 30px; text-align: center; color: #999;">
+                    <strong>Ready to build voice agents?</strong><br>
+                    <a href="https://aiappsgbbfactory.github.io/art-voice-agent-accelerator/" target="_blank">Start with the official documentation →</a>
+                </p>
+            </section>
+
+        </main>
+
+        <footer>
+            <p>
+                Generated for <strong>Azure Real-Time (ART) Voice Agent Accelerator</strong>
+            </p>
+            <p>
+                This documentation is based on the <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator" target="_blank">official GitHub repository</a>
+            </p>
+            <p style="margin-top: 15px; font-size: 0.9em;">
+                <strong>Source:</strong> <a href="https://github.com/Azure-Samples/art-voice-agent-accelerator" target="_blank">github.com/Azure-Samples/art-voice-agent-accelerator</a>
+                <br>
+                <strong>License:</strong> MIT | <strong>Last Updated:</strong> May 2026
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
