@@ -1,13 +1,39 @@
-"""
-ProjectK Frontend - Minimal chat interface
+# ProjectK Web UI
 
-This folder will contain the frontend code.
-For now, it's a placeholder structure.
+Simple chat interface for the ProjectK AI call screening backend.
 
-Plan:
-1. Use React + Expo (cross-platform iOS/Android)
-2. Simple chat interface for testing backend
-3. WebSocket connection to backend at ws://localhost:8000/api/v1/realtime/conversation
+## Quick Start
+
+### 1. Start the Backend (Terminal 1)
+```bash
+cd /Users/vksvarma/Desktop/ProjectK/apps/backend
+python3 main.py
+```
+
+### 2. Run the Web UI (Terminal 2)
+```bash
+cd /Users/vksvarma/Desktop/ProjectK/apps/frontend
+python3 -m http.server 3000
+```
+
+### 3. Open in Browser
+```
+http://localhost:3000
+```
+
+## Features
+
+✅ Real-time Chat via WebSocket
+✅ Context Configuration (caller info, company, risk level)
+✅ Typing Indicator
+✅ Auto-reconnect
+✅ Clean, responsive UI
+
+## How to Use
+
+1. Configure caller details (optional)
+2. Type your message
+3. Get AI response from backend agent
 """
 
 # Frontend structure to be built:
