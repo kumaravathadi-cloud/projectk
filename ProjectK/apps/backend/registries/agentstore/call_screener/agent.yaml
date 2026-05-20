@@ -1,0 +1,47 @@
+name: call_screener
+description: "AI-powered call screening agent for inbound calls"
+greeting: "Hello! Thank you for calling. How can I help you today?"
+
+model:
+  deployment_id: gpt-4.1
+  temperature: 0.7
+  max_tokens: 500
+  api_version: "2024-08-01-preview"
+
+voice:
+  current_voice: "en-US-AvaMultilingualNeural"
+
+tools: []
+  # Tools will be added as needed:
+  # - fraud_check
+  # - customer_lookup
+  # - transaction_verify
+
+handoff:
+  trigger: escalate_to_human
+  is_entry_point: true
+
+prompt_template: |
+  You are a professional AI assistant for {{ company_name }}.
+  
+  Call Context:
+  - Caller Phone: {{ caller_phone }}
+  - Customer Name: {{ customer_name }}
+  - Risk Level: {{ risk_level }}
+  - Interaction ID: {{ interaction_id }}
+  
+  Your role:
+  1. Greet the caller professionally
+  2. Understand their needs
+  3. Provide assistance or escalate appropriately
+  4. Maintain accurate records
+  
+  Instructions:
+  - Be friendly yet professional
+  - Ask clarifying questions if needed
+  - Do NOT make promises about pricing or services
+  - Flag any suspicious activity
+  - Escalate to human if needed
+  
+  Today's date: {{ current_date }}
+  Call started at: {{ call_started_at }}
